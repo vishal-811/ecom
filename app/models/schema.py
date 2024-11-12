@@ -14,4 +14,9 @@ class Create_user(BaseModel) :
 class SigninSchema(BaseModel):
     username : str
     password : str
+    role : str
+
+class BuyProductSchema(BaseModel):
+    productId : int 
+    quantity : int
 

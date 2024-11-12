@@ -1,11 +1,11 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, HTTPException
 import uvicorn
 from api.authRoutes import authRouter
 from api.adminRoutes import adminRoutes
 from api.userRoutes import userRoutes
 from db.database import init_db
-
+from api.userMiddleware import userMiddleware
 
 
 @asynccontextmanager
@@ -21,7 +21,6 @@ async def lifespan(app:FastAPI):
         pass
 
 app = FastAPI(
-    title="mY fast app",
     lifespan=lifespan
 )
 
@@ -31,9 +30,21 @@ app = FastAPI(
 def hello():
     return "hello"
 
+@app.middleware('http')
+async def check_user_middleware(request : Request, call_next):
+   try:
+        protected_routes = ['/buy', '/checkout', '/order']
+        if any(request.url.path.startswith(route) for route in protected_routes):
+         print("fine1")
+         auth_response= await userMiddleware(request)
+         if auth_response is not None :
+          return await call_next(request)                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
+   except Exception as error :
+       print("fine2")
+       raise HTTPException(status_code=401, detail="auth  failed")
+    
 
-
-app.include_router(authRouter, tags=["auth"])
+app.include_router(authRouter, tags=["auth"]) 
 app.include_router(adminRoutes, tags=["admin"])
 app.include_router(userRoutes,tags=["user"])
 
